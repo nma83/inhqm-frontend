@@ -1,0 +1,24 @@
+
+#mapid { height: 480px; }
+
+.road-excellent {
+  background-color: green;
+}
+
+.road-good {
+  background-color: lawngreen;
+}
+
+.road-average {
+  background-color: gold;
+}
+
+.road-bad {
+  background-color: orangered;
+}
+
+.center-text {
+  text-align: center;
+  display: block;
+}
+
