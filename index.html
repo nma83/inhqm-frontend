@@ -6,12 +6,14 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- <script src="lib/vue-autocomplete.js"></script> -->
   <script src="https://unpkg.com/vue-resource@1.2.1/dist/vue-resource.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
   <link rel="stylesheet" href="leaflet-icons/leaflet-vector-markers.css">
   <script src="leaflet-icons/leaflet-vector-markers.min.js"></script>
   <link rel="stylesheet" href="style.css" />
+  <!-- <link rel="stylesheet" href="lib/vue-autocomplete.css" /> -->
   <script src="logic.js"></script>
 </head>
 <body>
@@ -20,32 +22,74 @@
       <div class="panel-heading">
 	<div class="row">
 	<div class="col-md-3 col-md-offset-2">
-        <h3><button v-on:click="mode = 'start'" class="btn btn-default btn-block">{{ startLoc }}</button></h3>
-	</div>
-	<div class="col-md-3">
-        <h3><button v-on:click="mode = 'end'" class="btn btn-default btn-block">{{ endLoc }}</button></h3>
+          <div class="input-group">
+	  <span class="input-group-btn"><button v-on:click="mode = 'start'" class="btn btn-default" type="button">
+          <span class="glyphicon glyphicon-map-marker"></span>
+	  </button></span>
+          <input type="text" class="form-control" placeholder="Start location" v-model="startLoc">
+          <!-- <autocomplete name="startLoc" url="http://mapnik.narenma.net/map/search" model="startLoc"></autocomplete> -->
+	  <span class = "input-group-btn"><button v-on:click="search('start')" class="btn btn-default" type="button">
+          <span class="glyphicon glyphicon-search"></span>
+	  </button></span>
+	  </div>
         </div>
-	<div class="col-md-2"><h3>
-         <button v-on:click="route()" type="button" class="btn btn-primary" :disabled="noRoute">Route</button>
-        </h3></div>
+	<div class="col-md-3">
+          <div class="input-group">
+	  <span class="input-group-btn"><button v-on:click="mode = 'end'" class="btn btn-default" type="button">
+          <span class="glyphicon glyphicon-map-marker"></span>
+	  </button></span>
+          <input type="text" class="form-control" placeholder="End location" v-model="endLoc">
+	  <span class = "input-group-btn"><button class="btn btn-default" type="button">
+          <span class="glyphicon glyphicon-search"></span>
+	  </button></span>
+	  </div>
+        </div>
+	<div class="col-md-1">
+         <button v-on:click="route()" type="button" class="btn btn-primary btn-block" :disabled="noRoute">Route</button>
+        </div>
+	<div class="col-md-1">
+         <button v-on:click="clear()" type="button" class="btn btn-danger btn-block" :disabled="noRoute">Clear</button>
+        </div>
       </div>
       <div class="panel-body">
-      <div id="mapid"></div>
-      </div>
-      <div class="panel-footer">
-      <div class="row"><h3>
-        <div class="col-md-8 col-md-offset-2 center-text">
-         <span class="label label-default">Set road quality</span>
-         <div  class="btn-group" role="group" aria-label="...">
-           <button :disabled="!selected" v-on:click="setQ(3)" type="button" class="btn btn-default road-excellent">Excellent</button>
-           <button :disabled="!selected" v-on:click="setQ(2)" type="button" class="btn btn-default road-good">Good</button>
-           <button :disabled="!selected" v-on:click="setQ(1)" type="button" class="btn btn-default road-average">Average</button>
-           <button :disabled="!selected" v-on:click="setQ(0)" type="button" class="btn btn-default road-bad">Bad</button>
-         </div>
-         <button type="button" class="btn btn-primary" :disabled="!modified">Save</button>
-	</div>
+        <div class="row">
+          <div id="mapid" class="col-md-11"></div>
+          <div class="col-md-1 center-text">
+           <div class="row"><h4>
+           <span class="label label-default">Set road quality</span>
+           </h4></div>
+           <div class="btn-group" role="group" aria-label="...">
+             <div class="row">
+             <button :disabled="!selected" v-on:click="setQ('excellent')" type="button" class="btn btn-default btn-block road-excellent">Excellent</button>
+             </div>
+             <div class="row">
+             <button :disabled="!selected" v-on:click="setQ('good')" type="button" class="btn btn-default btn-block road-good">Good</button>
+             </div>
+             <div class="row">
+             </div>
+             <div class="row">
+             <button :disabled="!selected" v-on:click="setQ('intermediate')" type="button" class="btn btn-default btn-block road-average">Average</button>
+             </div>
+             <div class="row">
+             <button :disabled="!selected" v-on:click="setQ('bad')" type="button" class="btn btn-default btn-block road-bad">Bad</button>
+             </div>
+           </div>
+           <div class="row">
+           <button type="button" v-on:click="save()" class="btn btn-primary" :disabled="!modified || saving">Save</button>
+           </div>
+        </div>
        </div>
-      </h3></div>
+      </div>
+     <div class="panel-footer">
+       <div class="row">
+	<div class="col-md-offset-4 col-md-2"><h4>
+         {{ nodes }} nodes
+        </h4></div>
+	<div class="col-md-2"><h4>
+         {{ stat }}
+        </h4></div>
+       </div>
+     </div>
     </div>
   </div>
 </body>
